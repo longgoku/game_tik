@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Đấu Trường Con Quay Sinh Tử - BẢN VIP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0a0f1a; --bg-panel: #101826; --bg-card: #182232;
+      --accent: #00e5ff; --accent2: #ff3d71; --gold: #fbbf24; --green: #10b981;
+      --purple: #a855f7; --border: #1e2d45; --text: #e2e8f0; --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #2d3a52 #0f172a; }
+    body {
+      font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
+      background: radial-gradient(ellipse at center, #111c2e 0%, #0a0f1a 100%);
+      overflow: hidden; margin: 0; display: flex; height: 100vh;
+      letter-spacing: 0.2px; color: var(--text);
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb { background: #2d3a52; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3b4a66; }
+
+    #control-panel {
+      width: 370px; background: linear-gradient(180deg, #101b2b 0%, #0d1522 100%);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      padding: 18px 16px; color: #fff; box-sizing: border-box; overflow-y: auto;
+      box-shadow: inset -5px 0 20px rgba(0,0,0,0.3); z-index: 5; gap: 16px;
+    }
+    #arena-container {
+      flex: 1; display: flex; justify-content: center; align-items: center;
+      background: radial-gradient(circle at center, #121e2f 0%, #0a0f1a 100%); position: relative;
+    }
+    canvas {
+      border: 2px solid #2e3f5b; border-radius: 24px;
+      box-shadow: 0 0 60px rgba(0,180,255,0.2), 0 20px 40px rgba(0,0,0,0.8);
+      max-width: 96%; max-height: 96vh; transition: box-shadow 0.5s;
+    }
+    .section-title {
+      font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--accent); margin-bottom: 10px; padding-bottom: 8px;
+      border-bottom: 2px solid #1e3248; display: flex; align-items: center; gap: 6px;
+    }
+    .input-group { display: flex; gap: 8px; margin-bottom: 12px; }
+    input[type="text"], input[type="number"], select {
+      flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid #253349;
+      background: #0b121f; color: #fff; font-family: inherit; font-size: 13px;
+      transition: all 0.2s; outline: none;
+    }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 12px rgba(0,229,255,0.25); }
+    button {
+      padding: 10px 16px; background: linear-gradient(135deg, #0088cc, #0066aa);
+      color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 700;
+      font-size: 13px; font-family: inherit; letter-spacing: 0.3px; transition: all 0.25s;
+      box-shadow: 0 4px 12px rgba(0,136,204,0.35); white-space: nowrap;
+    }
+    button:hover { background: linear-gradient(135deg, #00a0e6, #0077bb); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,160,230,0.5); }
+    button:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(0,136,204,0.4); }
+    #manual-status { font-size: 12px; color: #94a3b8; margin-top: -6px; margin-bottom: 8px; min-height: 16px; font-style: italic; }
+    #speed-control { background: var(--bg-card); border-radius: 12px; padding: 14px; border: 1px solid var(--border); }
+    #speed-control input[type="range"] { width: 100%; margin: 8px 0; accent-color: var(--accent); }
+    #speed-value { font-weight: 800; color: var(--gold); font-size: 15px; background: #1a2538; padding: 2px 10px; border-radius: 20px; display: inline-block; }
+    #leaderboard { flex: 1; overflow-y: auto; background: rgba(8,14,24,0.6); border-radius: 12px; padding: 6px; min-height: 100px; border: 1px solid #1a2740; }
+    .player-item {
+      display: flex; align-items: center; padding: 10px 10px; margin: 3px 0; background: #131e30;
+      border-radius: 10px; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent;
+    }
+    .player-item:hover { background: #1c2b42; border-left: 4px solid var(--accent); transform: translateX(3px); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+    .p-avatar { width: 34px; height: 34px; border-radius: 50%; margin-right: 10px; object-fit: cover; border: 2px solid #2d405b; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+    .p-name { flex: 1; font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f1f5f9; }
+    .p-score { background: linear-gradient(135deg, #0f7d5c, #0b5e47); padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: 700; color: white; letter-spacing: 0.4px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+    .p-auras { font-size: 12px; margin-right: 6px; filter: drop-shadow(0 0 3px currentColor); }
+
+    #round-timer {
+      position: absolute; top: 24px; font-size: 32px; font-weight: 800; color: #fff;
+      text-shadow: 0 0 25px var(--accent), 0 2px 10px #000; pointer-events: none;
+      background: rgba(5,12,22,0.75); backdrop-filter: blur(10px); padding: 8px 28px;
+      border-radius: 40px; border: 1px solid rgba(0,229,255,0.3); letter-spacing: 2px; z-index: 15;
+    }
+    #aura-float-panel, #control-float-panel, #tts-control-panel, #profile-float-panel {
+      position: absolute; background: rgba(13,20,34,0.85); backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; z-index: 20; color: #fff;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05); transition: box-shadow 0.3s;
+      min-width: 200px; /* đảm bảo đủ rộng để kéo */
+    }
+    #aura-float-panel { top: 20px; right: 20px; width: 260px; }
+    #control-float-panel { top: 20px; left: 20px; width: 250px; }
+    #tts-control-panel { bottom: 20px; right: 20px; width: 200px; }
+    #profile-float-panel { bottom: 80px; left: 20px; width: 260px; }
+
+    .panel-header {
+      padding: 12px 16px; font-weight: 700; cursor: grab; display: flex; justify-content: space-between;
+      align-items: center; background: rgba(255,255,255,0.03); border-radius: 16px 16px 0 0;
+      user-select: none; letter-spacing: 0.5px; font-size: 13px; color: #cbd5e1; transition: background 0.2s;
+    }
+    .panel-header:active { cursor: grabbing; }
+    .panel-header:hover { background: rgba(255,255,255,0.06); }
+    .panel-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .collapsed .panel-body { display: none; }
+    .collapsed .panel-header { border-radius: 16px; }
+
+    #controlPointsInput { width: 85px; }
+    .kill-btn { width: 100%; margin-top: 10px; background: linear-gradient(135deg, #e11d48, #b91c1c) !important; box-shadow: 0 4px 12px rgba(225,29,72,0.4) !important; }
+    .kill-btn:hover { background: linear-gradient(135deg, #f43f5e, #dc2626) !important; box-shadow: 0 8px 20px rgba(244,63,94,0.6) !important; }
+
+    #top3-overlay {
+      position: absolute; inset: 0; background: rgba(2,6,15,0.9); backdrop-filter: blur(20px);
+      display: none; flex-direction: column; align-items: center; justify-content: center; color: #fff; z-index: 30;
+    }
+    #top3-overlay.show { display: flex; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    #top3-overlay h1 { font-size: 38px; font-weight: 800; color: #fde047; margin-bottom: 30px; text-shadow: 0 0 30px #fbbf24, 0 2px 10px #000; letter-spacing: 2px; }
+    #top3-list { display: flex; gap: 30px; align-items: flex-end; }
+    .top3-card { background: rgba(20,30,48,0.8); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px 18px; text-align: center; width: 150px; border: 1px solid rgba(255,255,255,0.08); transition: transform 0.3s; }
+    .top3-card:hover { transform: translateY(-8px); }
+    .top3-card img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; border: 3px solid rgba(255,255,255,0.2); }
+    .top3-card .rank { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+    .top3-card .name { font-weight: 700; font-size: 15px; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .top3-card .score { color: #4ade80; font-weight: 800; font-size: 16px; }
+    .rank-1 { order: 2; transform: scale(1.2); border: 2px solid #fde047; box-shadow: 0 0 35px rgba(253,224,71,0.4); }
+    .rank-2 { order: 1; border: 2px solid #cbd5e1; box-shadow: 0 0 20px rgba(203,213,225,0.3); }
+    .rank-3 { order: 3; border: 2px solid #cd7b34; box-shadow: 0 0 20px rgba(205,123,52,0.3); }
+    #next-round-note { margin-top: 24px; color: #94a3b8; font-size: 15px; font-style: italic; }
+    #rest-list { margin-top: 30px; width: 500px; max-height: 200px; overflow-y: auto; background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); border-radius: 16px; padding: 10px; border: 1px solid rgba(255,255,255,0.05); }
+    .rest-item { display: flex; align-items: center; padding: 8px 12px; margin: 3px 0; background: rgba(30,41,59,0.6); border-radius: 10px; }
+    .rest-item .rank-num { width: 30px; font-weight: 700; color: #94a3b8; }
+    .rest-item img { width: 28px; height: 28px; border-radius: 50%; margin-right: 10px; object-fit: cover; }
+    .rest-item .name { flex: 1; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rest-item .score { font-size: 12px; color: #10b981; font-weight: 700; }
+
+    .collapsible-section { display: flex; flex-direction: column; margin-bottom: 0; }
+    .collapsible-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 2px solid #1e3248; padding-bottom: 8px; margin-bottom: 12px; user-select: none; }
+    .collapsible-header .section-title { margin: 0; border: 0; padding: 0; }
+    .collapsible-header .toggle-icon { color: var(--accent); font-size: 14px; transition: transform 0.2s; }
+    .collapsible-section.collapsed .collapsible-body { display: none; }
+    #section-leaderboard.collapsible-section { flex: 1; min-height: 0; }
+    #section-leaderboard .collapsible-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    #section-leaderboard.collapsed { flex: 0 0 auto; }
+
+    .player-picker { position: relative; flex: 1; }
+    .player-picker-toggle { width: 100%; display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 10px; border: 1px solid #253349; background: #0b121f; color: #fff; cursor: pointer; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; }
+    .player-picker-toggle:hover { border-color: #3b506b; }
+    .player-picker-toggle .pp-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .player-picker-toggle .pp-label { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-size: 13px; font-weight: 500; }
+    .player-picker-toggle .pp-caret { color: #94a3b8; font-size: 10px; flex-shrink: 0; }
+    .player-picker-list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #111b2b; border: 1px solid #253349; border-radius: 12px; max-height: 200px; overflow-y: auto; z-index: 50; display: none; box-shadow: 0 15px 30px rgba(0,0,0,0.6); backdrop-filter: blur(8px); }
+    .player-picker-list.open { display: block; animation: dropIn 0.15s ease; }
+    @keyframes dropIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    .pp-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; transition: background 0.15s; }
+    .pp-item:hover { background: #1e2e47; }
+    .pp-item-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid #334155; }
+    .pp-item-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 500; }
+    .pp-item-score { font-size: 11px; color: #10b981; font-weight: 700; flex-shrink: 0; }
+    .pp-empty { padding: 10px; font-size: 12px; color: #64748b; text-align: center; }
+
+    #audio-unlock-banner { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #0088cc, #004488); color: #fff; padding: 12px 28px; border-radius: 30px; cursor: pointer; z-index: 30; font-weight: 700; font-size: 14px; box-shadow: 0 8px 25px rgba(0,136,204,0.5); border: 1px solid rgba(255,255,255,0.2); transition: all 0.25s; letter-spacing: 0.5px; }
+    #audio-unlock-banner:hover { background: linear-gradient(135deg, #0099dd, #0055aa); box-shadow: 0 12px 30px rgba(0,170,255,0.7); transform: translateX(-50%) scale(1.03); }
+
+    .profile-info { text-align: center; }
+    .profile-info img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--accent); margin-bottom: 8px; }
+    .profile-info .name { font-weight: bold; font-size: 14px; }
+    .profile-info .uid { font-size: 11px; color: #94a3b8; }
+
+    /* Nút toggle ẩn/hiện toàn bộ panel */
+    #toggle-all-panels-btn {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.8); color: white; border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 30px; padding: 10px 24px; cursor: pointer; z-index: 50;
+      font-weight: 700; font-size: 14px; letter-spacing: 0.5px; transition: all 0.3s;
+      backdrop-filter: blur(12px); box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+    #toggle-all-panels-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--accent); }
+    .panels-hidden #control-float-panel,
+    .panels-hidden #aura-float-panel,
+    .panels-hidden #tts-control-panel,
+    .panels-hidden #profile-float-panel { display: none !important; }
+  </style>
+</head>
+<body>
+<div id="control-panel">
+  <div class="collapsible-section" id="section-manual-add">
+    <div class="collapsible-header" onclick="toggleSection('section-manual-add')">
+      <span class="section-title">🛠️ THÊM NGƯỜI CHƠI THỦ CÔNG</span>
+      <span class="toggle-icon" id="section-manual-add-icon">▾</span>
+    </div>
+    <div class="collapsible-body">
+      <div class="input-group">
+        <input type="text" id="manualId" placeholder="Nhập ID TikTok...">
+        <button onclick="addManualPlayer()">VÀO SÂN</button>
+      </div>
+      <div id="manual-status"></div>
+    </div>
+  </div>
+
+  <div class="section-title">⚡ TỐC ĐỘ TRÒ CHƠI</div>
+  <div id="speed-control">
+    <input type="range" id="speedSlider" min="0.5" max="10" step="0.1" value="1">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="color:#94a3b8; font-size:12px;">Tốc độ</span>
+      <span id="speed-value">1.0x</span>
+    </div>
+  </div>
+
+  <div class="collapsible-section" id="section-leaderboard">
+    <div class="collapsible-header" onclick="toggleSection('section-leaderboard')">
+      <span class="section-title">⚔️ NGƯỜI CHƠI THAM GIA</span>
+      <span class="toggle-icon" id="section-leaderboard-icon">▾</span>
+    </div>
+    <div class="collapsible-body">
+      <div id="leaderboard"></div>
+    </div>
+  </div>
+</div>
+
+<div id="arena-container">
+  <div id="round-timer">10:00</div>
+  <canvas id="gameCanvas" width="900" height="900"></canvas>
+
+  <div id="control-float-panel" class="collapsed">
+    <div class="panel-header" onclick="toggleControlPanel()"><span>🎮 Kill / cộng điểm tay</span><span id="control-toggle-icon">▸</span></div>
+    <div class="panel-body">
+      <div class="input-group">
+        <div class="player-picker" id="controlPlayerPicker">
+          <button type="button" class="player-picker-toggle"><img class="pp-avatar" style="display:none;"><span class="pp-label">-- Chọn người chơi --</span><span class="pp-caret">▾</span></button>
+          <div class="player-picker-list"></div>
+        </div>
+      </div>
+      <div class="input-group">
+        <input type="number" id="controlPointsInput" placeholder="+/- điểm" value="100">
+        <button onclick="applyManualPoints(1)">CỘNG ĐIỂM</button>
+        <button onclick="applyManualPoints(-1)" style="background: linear-gradient(135deg, #c2410c, #9a3412);">TRỪ ĐIỂM</button>
+      </div>
+      <button class="kill-btn" onclick="killSelectedPlayer()">💀 KILL NGƯỜI NÀY</button>
+    </div>
+  </div>
+
+  <div id="aura-float-panel">
+    <div class="panel-header" onclick="toggleAuraPanel()"><span>✨ Buff hào quang thủ công</span><span id="aura-toggle-icon">▾</span></div>
+    <div class="panel-body">
+      <div class="input-group">
+        <select id="auraTypeSelect">
+          <option value="gold">🟡 Vàng (x1.3, 6s)</option>
+          <option value="green">🟢 Xanh lá (x1.5, 6s)</option>
+          <option value="red">🔴 Đỏ (x1.9, 6s)</option>
+          <option value="purple">🟣 Tím (x2.5, 6s)</option>
+          <option value="rainbow">🌈 Rainbow (x3.2, 7s, bất tử 6s đầu)</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <div class="player-picker" id="auraPlayerPicker">
+          <button type="button" class="player-picker-toggle"><img class="pp-avatar" style="display:none;"><span class="pp-label">-- Chọn người chơi --</span><span class="pp-caret">▾</span></button>
+          <div class="player-picker-list"></div>
+        </div>
+      </div>
+      <button onclick="applyManualAura()" style="width:100%">BUFF (có thể chồng nhiều loại)</button>
+    </div>
+  </div>
+
+  <div id="tts-control-panel">
+    <div class="panel-header" onclick="toggleTtsPanel()"><span>🔊 Giọng đọc</span><span id="tts-toggle-icon">▾</span></div>
+    <div class="panel-body">
+      <button id="btn-pause-speech" onclick="pauseSpeech()">⏸️ Dừng đọc</button>
+      <button id="btn-resume-speech" onclick="resumeSpeech()">▶️ Tiếp tục đọc</button>
+    </div>
+  </div>
+
+  <div id="profile-float-panel" class="collapsed">
+    <div class="panel-header" onclick="toggleProfilePanel()"><span>👤 Tra cứu hồ sơ</span><span id="profile-toggle-icon">▸</span></div>
+    <div class="panel-body">
+      <div class="input-group">
+        <input type="text" id="profileInputId" placeholder="Nhập ID TikTok...">
+        <button onclick="lookupProfileById()">🔍 Tra</button>
+      </div>
+      <div class="profile-info" id="profileInfo" style="display:none;">
+        <img id="profileAvatar" src="">
+        <div class="name" id="profileName"></div>
+        <div class="uid" id="profileUid"></div>
+        <div id="profilePoints" style="margin-top:5px;"></div>
+        <button onclick="openTikTokProfile()" style="margin-top:8px; width:100%;">📱 Mở TikTok</button>
+      </div>
+      <div id="profileStatus" style="font-size:12px; color:#94a3b8;"></div>
+    </div>
+  </div>
+
+  <!-- Nút ẩn/hiện toàn bộ panel -->
+  <button id="toggle-all-panels-btn" onclick="toggleAllPanels()">👁️ Ẩn tất cả panel</button>
+
+  <div id="audio-unlock-banner">🔊 Bấm vào đây để bật giọng đọc</div>
+
+  <div id="top3-overlay">
+    <h1>🏆 KẾT THÚC VÒNG ĐẤU 🏆</h1>
+    <div id="top3-list"></div>
+    <div id="rest-list"></div>
+    <div id="next-round-note">Vòng mới sẽ bắt đầu sau ít giây...</div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const leaderboard = document.getElementById('leaderboard');
+    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socket = new WebSocket(`${wsProtocol}//${location.host}`);
+
+    const FALLBACK_AVATAR = 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
+    const ROUND_DURATION_MS = 10 * 60 * 1000;
+    const RESULT_DISPLAY_MS = 10 * 1000;
+
+    let spinners = [];
+    const arenaPadding = 20;
+    const arenaHalf = canvas.width / 2 - arenaPadding;
+    const arenaLeft = canvas.width / 2 - arenaHalf, arenaRight = canvas.width / 2 + arenaHalf;
+    const arenaTop = canvas.height / 2 - arenaHalf, arenaBottom = canvas.height / 2 + arenaHalf;
+    const randomColors = ['#ef4444','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#14b8a6'];
+
+    let speedMultiplier = 1;
+    document.getElementById('speedSlider').addEventListener('input', e => {
+      speedMultiplier = parseFloat(e.target.value);
+      document.getElementById('speed-value').textContent = speedMultiplier.toFixed(1) + 'x';
+    });
+
+    window.toggleSection = (id) => {
+      const sec = document.getElementById(id);
+      sec.classList.toggle('collapsed');
+      const icon = document.getElementById(id + '-icon');
+      if (icon) icon.textContent = sec.classList.contains('collapsed') ? '▸' : '▾';
+    };
+
+    let roundEndTime = Date.now() + ROUND_DURATION_MS;
+    let roundActive = true;
+
+    const AURA_STYLE = {
+      gold:    { color: '#eab308', glow: 'rgba(234,179,8,0.6)',  spinBoost: 1.3, moveBoost: 1.2, tierLevel: 1 },
+      green:   { color: '#22c55e', glow: 'rgba(34,197,94,0.55)', spinBoost: 1.5, moveBoost: 1.4, tierLevel: 2 },
+      red:     { color: '#ef4444', glow: 'rgba(239,68,68,0.55)', spinBoost: 1.9, moveBoost: 1.7, tierLevel: 3 },
+      purple:  { color: '#a855f7', glow: 'rgba(168,85,247,0.6)',  spinBoost: 2.5, moveBoost: 2.2, tierLevel: 4 },
+      rainbow: { color: '#ffffff', glow: 'rgba(255,255,255,0.7)', spinBoost: 3.2, moveBoost: 3.0, tierLevel: 5 }
+    };
+    const TIER_ORDER = ['gold','green','red','purple'];
+    const RANK_COLORS = { 1: '#facc15', 2: '#9ca3af', 3: '#b45309' };
+    const TIER_AURA_DURATION_MS = 6000;
+    const RAINBOW_DURATION_MS = 7000;
+    const RAINBOW_INVINCIBLE_MS = 6000;
+    const DAMAGE_BASE = 4, DAMAGE_REDUCED = 2, DAMAGE_IMMUNE = 0;
+
+    function toEven(n) { return Math.round(n/2)*2; }
+
+    const GOLD_AURA_INTERVAL_MS = 30000, GOLD_AURA_DURATION_MS = 5000, GOLD_AURA_TARGET_COUNT = 2;
+    function applyRandomGoldAura() {
+      if (!roundActive || spinners.length === 0) return;
+      const shuffled = [...spinners].sort(() => Math.random() - 0.5);
+      const chosen = shuffled.slice(0, Math.min(GOLD_AURA_TARGET_COUNT, shuffled.length));
+      chosen.forEach(s => s.addAura('gold', GOLD_AURA_DURATION_MS));
+    }
+    setInterval(applyRandomGoldAura, GOLD_AURA_INTERVAL_MS);
+
+    const DEFAULT_PLAYERS = [
+      { uniqueId: 'default_ronaldo', name: 'CR7', avatar: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/330px-Cristiano_Ronaldo_2018.jpg' },
+      { uniqueId: 'default_messi', name: 'Messi', avatar: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Lionel_Messi_20180626.jpg/330px-Lionel_Messi_20180626.jpg' }
+    ];
+    function ensureDefaultPlayers() {
+      if (!roundActive || spinners.length > 0) return;
+      DEFAULT_PLAYERS.forEach(p => {
+        const sp = new Spinner(p.uniqueId, p.name, p.avatar);
+        sp.points = 100; spinners.push(sp);
+      });
+    }
+    setInterval(ensureDefaultPlayers, 2000);
+
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+    function playTone(f,d,t,g) {
+      try {
+        const ac = getAudioCtx(), o = ac.createOscillator(), gn = ac.createGain();
+        o.type = t||'sine'; o.frequency.value = f;
+        gn.gain.setValueAtTime(g||0.2, ac.currentTime);
+        gn.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+d);
+        o.connect(gn).connect(ac.destination); o.start(); o.stop(ac.currentTime+d);
+      } catch(e){}
+    }
+    function playJoinSound(){ playTone(660,0.15,'triangle',0.2); setTimeout(()=>playTone(880,0.15,'triangle',0.2),90); }
+    let lastHitSoundTime=0;
+    function playHitSound(){ const n=Date.now(); if(n-lastHitSoundTime<150)return; lastHitSoundTime=n; playTone(180,0.08,'square',0.15); }
+    function playKillSound(){ try{ const ac=getAudioCtx(); const o=ac.createOscillator(); const g=ac.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(300,ac.currentTime); o.frequency.exponentialRampToValueAtTime(40,ac.currentTime+0.5); g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.5); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+0.5); }catch(e){} }
+    function playRoundEndSound(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.3,'triangle',0.25),i*150)); }
+
+    function sanitizeNameForSpeech(name){ return (name||'').replace(/[^\p{L}\p{N}\s]/gu,'').trim(); }
+
+    // ========== GOOGLE TTS + FALLBACK ==========
+    const TTS_MAX_CHARS = 180;
+    let speechQueue = [], isSpeaking = false, audioUnlocked = false, speechPaused = false;
+    let currentAudio = null, ttsFailCount = 0;
+    const MAX_TTS_FAIL = 3; // sau 3 lần fail chuyển sang Web Speech
+
+    function buildGoogleTtsUrl(text) {
+      return `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&idx=0&total=1&textlen=${text.length}&q=${encodeURIComponent(text)}`;
+    }
+    function splitTextForTTS(text) {
+      if (text.length <= TTS_MAX_CHARS) return [text];
+      const parts = []; let remaining = text.trim();
+      while (remaining.length > TTS_MAX_CHARS) {
+        let cut = remaining.lastIndexOf(' ', TTS_MAX_CHARS);
+        if (cut <= 0) cut = TTS_MAX_CHARS;
+        parts.push(remaining.slice(0, cut).trim());
+        remaining = remaining.slice(cut).trim();
+      }
+      if (remaining) parts.push(remaining);
+      return parts;
+    }
+
+    function stopCurrentAudio() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.remove();
+        currentAudio = null;
+      }
+      // dừng cả speechSynthesis nếu đang nói
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    }
+
+    function speakWithSpeechSynthesis(text) {
+      return new Promise((resolve, reject) => {
+        if (!window.speechSynthesis) return reject('không hỗ trợ');
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'vi-VN';
+        utterance.rate = 0.9;
+        utterance.onend = resolve;
+        utterance.onerror = reject;
+        window.speechSynthesis.speak(utterance);
+      });
+    }
+
+    function playSpeechQueue() {
+      if (isSpeaking || speechQueue.length === 0 || speechPaused || !audioUnlocked) return;
+      if (ttsFailCount >= MAX_TTS_FAIL) {
+        // fallback sang Web Speech API
+        isSpeaking = true;
+        const item = speechQueue[0];
+        speakWithSpeechSynthesis(item.text)
+          .then(() => {
+            speechQueue.shift();
+            ttsFailCount = 0; // reset để thử lại Google sau
+            isSpeaking = false;
+            setTimeout(playSpeechQueue, 300);
+          })
+          .catch(() => {
+            // vẫn lỗi, bỏ qua câu này
+            speechQueue.shift();
+            isSpeaking = false;
+            setTimeout(playSpeechQueue, 500);
+          });
+        return;
+      }
+
+      stopCurrentAudio();
+      isSpeaking = true;
+      const item = speechQueue[0];
+      const audio = new Audio(buildGoogleTtsUrl(item.text));
+      currentAudio = audio;
+      audio.preload = 'auto';
+      let timeoutId = setTimeout(() => {
+        if (currentAudio === audio) {
+          stopCurrentAudio();
+          ttsFailCount++;
+          isSpeaking = false;
+          playSpeechQueue();
+        }
+      }, 8000);
+      const goNext = () => {
+        clearTimeout(timeoutId);
+        stopCurrentAudio();
+        speechQueue.shift();
+        ttsFailCount = 0;
+        isSpeaking = false;
+        setTimeout(playSpeechQueue, 300);
+      };
+      const handleError = () => {
+        clearTimeout(timeoutId);
+        stopCurrentAudio();
+        ttsFailCount++;
+        isSpeaking = false;
+        playSpeechQueue();
+      };
+      audio.onended = goNext;
+      audio.onerror = handleError;
+      audio.play().catch(handleError);
+    }
+
+    function queueSpeech(text) {
+      splitTextForTTS(text).forEach(t => speechQueue.push({ text: t }));
+      playSpeechQueue();
+    }
+
+    window.pauseSpeech = function() {
+      speechPaused = true;
+      stopCurrentAudio();
+      isSpeaking = false;
+    };
+    window.resumeSpeech = function() {
+      speechPaused = false;
+      playSpeechQueue();
+    };
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      document.getElementById('audio-unlock-banner')?.remove();
+      const dummy = new Audio(buildGoogleTtsUrl('ok'));
+      dummy.volume = 0;
+      dummy.play().then(() => { dummy.pause(); dummy.remove(); playSpeechQueue(); }).catch(() => playSpeechQueue());
+    }
+    document.addEventListener('click', unlockAudio, { once: true });
+
+    window.toggleTtsPanel = function() {
+      const panel = document.getElementById('tts-control-panel');
+      panel.classList.toggle('collapsed');
+      document.getElementById('tts-toggle-icon').textContent = panel.classList.contains('collapsed') ? '▸' : '▾';
+    };
+
+    function announceDonation(n,g){ queueSpeech(`Cảm ơn ${sanitizeNameForSpeech(n)||'bạn'} đã donate ${sanitizeNameForSpeech(g)||'quà'}`); }
+    function announceFollow(n){ queueSpeech(`Cảm ơn ${sanitizeNameForSpeech(n)||'bạn'} đã follow kênh`); }
+    function announceMemberJoin(n){ queueSpeech(`Xin chào ${sanitizeNameForSpeech(n)||'bạn'} đã tham gia live`); }
+    function announceLike(n){ queueSpeech(`Cảm ơn ${sanitizeNameForSpeech(n)||'bạn'} đã thích phiên live`); }
+
+    class Spinner {
+      constructor(uniqueId, userNickname, avatarUrl) {
+        this.uniqueId = uniqueId; this.userNickname = userNickname;
+        this.points = 100; this.color = randomColors[Math.floor(Math.random()*randomColors.length)];
+        this.x = arenaLeft+40+Math.random()*(arenaHalf*2-80);
+        this.y = arenaTop+40+Math.random()*(arenaHalf*2-80);
+        this.vx = (Math.random()-0.5)*3; this.vy = (Math.random()-0.5)*3;
+        if(Math.abs(this.vx)<0.8) this.vx=1.2;
+        if(Math.abs(this.vy)<0.8) this.vy=1.2;
+        this.angle=0; this.baseSpinSpeed=0.08; this.spinSpeed=this.baseSpinSpeed;
+        this.activeAuras=[]; this.collectedTiers=new Set();
+        this.invincibleUntil=0; this.attackBoostUntil=0;
+        this.spawnGraceUntil=Date.now()+3000;
+        this.rank = null;
+        this.lastCollisionTime = Date.now(); // thời điểm va chạm gần nhất
+        this.img = new Image();
+        this.img.onerror = ()=>{ if(this.img.src !== FALLBACK_AVATAR) this.img.src = FALLBACK_AVATAR; };
+        this.img.src = avatarUrl || FALLBACK_AVATAR;
+      }
+      get radius() { return Math.max(12, Math.min(12+(this.points*0.12), 100)); }
+      addAura(tier, durationMs) {
+        this.activeAuras.push({tier, until: Date.now()+durationMs});
+        if(TIER_ORDER.includes(tier)) { this.collectedTiers.add(tier); this.checkRainbowCombo(); }
+      }
+      liveAuras() { const now=Date.now(); this.activeAuras=this.activeAuras.filter(a=>a.until>now); return this.activeAuras; }
+      hasAura() { return this.liveAuras().length>0; }
+      maxAuraTierLevel() { const l=this.liveAuras(); return l.length?Math.max(...l.map(a=>AURA_STYLE[a.tier].tierLevel)):0; }
+      currentMoveBoost() {
+        let boost = 1.0;
+        this.liveAuras().forEach(a => { boost *= AURA_STYLE[a.tier].moveBoost; });
+        return Math.min(3.0, boost);
+      }
+      checkRainbowCombo() { if(TIER_ORDER.every(t=>this.collectedTiers.has(t))) this.triggerRainbow(); }
+      triggerRainbow() {
+        this.activeAuras = this.activeAuras.filter(a=>!TIER_ORDER.includes(a.tier));
+        this.collectedTiers.clear();
+        this.addAura('rainbow', RAINBOW_DURATION_MS);
+        this.invincibleUntil = Date.now()+RAINBOW_INVINCIBLE_MS;
+        this.attackBoostUntil = Date.now()+RAINBOW_INVINCIBLE_MS;
+      }
+      effectiveSpinSpeed() { 
+        let s = this.spinSpeed; 
+        this.liveAuras().forEach(a => { s *= AURA_STYLE[a.tier].spinBoost; }); 
+        return s * speedMultiplier; 
+      }
+      update() {
+        // Tăng tốc nếu không va chạm trong 5 giây và không có hào quang
+        const now = Date.now();
+        if (!this.hasAura() && now - this.lastCollisionTime > 5000) {
+          this.spinSpeed = Math.min(this.baseSpinSpeed * 1.4, this.spinSpeed + 0.001);
+        }
+        this.angle += this.effectiveSpinSpeed();
+        const moveBoost = this.currentMoveBoost();
+        this.x += this.vx * speedMultiplier * moveBoost;
+        this.y += this.vy * speedMultiplier * moveBoost;
+        if(this.spinSpeed>this.baseSpinSpeed && this.hasAura() === false) { 
+          // giảm dần nếu không còn va chạm và đang tăng tốc
+          if (now - this.lastCollisionTime > 5000) {
+            // đang trong chế độ tăng tốc, không giảm
+          } else {
+            this.spinSpeed -= 0.008; 
+            if(this.spinSpeed < this.baseSpinSpeed) this.spinSpeed = this.baseSpinSpeed;
+          }
+        }
+        let speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+        const maxSpeed = 4.0 * moveBoost;
+        if(speed > maxSpeed) { this.vx = (this.vx/speed)*maxSpeed; this.vy = (this.vy/speed)*maxSpeed; }
+        let bounced = false;
+        if(this.x-this.radius < arenaLeft){ this.x=arenaLeft+this.radius; this.vx=Math.abs(this.vx); bounced=true; }
+        else if(this.x+this.radius > arenaRight){ this.x=arenaRight-this.radius; this.vx=-Math.abs(this.vx); bounced=true; }
+        if(this.y-this.radius < arenaTop){ this.y=arenaTop+this.radius; this.vy=Math.abs(this.vy); bounced=true; }
+        else if(this.y+this.radius > arenaBottom){ this.y=arenaBottom-this.radius; this.vy=-Math.abs(this.vy); bounced=true; }
+        if(bounced) {
+          this.spinSpeed = 0.25;
+          this.lastCollisionTime = now; // va chạm tường cũng reset thời gian idle
+        }
+      }
+      draw() {
+        ctx.save(); ctx.translate(this.x, this.y);
+        const auras=this.liveAuras();
+        auras.forEach((a,i)=>{
+          const style=AURA_STYLE[a.tier]; const pulse=6+Math.sin(Date.now()/100+i)*3;
+          const isRainbow=a.tier==='rainbow'; const color=isRainbow?`hsl(${(Date.now()/8)%360},90%,60%)`:style.color;
+          ctx.save(); ctx.shadowBlur=isRainbow?30:20; ctx.shadowColor=color;
+          ctx.beginPath(); ctx.arc(0,0,this.radius+8+pulse+i*8,0,Math.PI*2);
+          ctx.fillStyle=isRainbow?color.replace('60%)','60%,0.55)').replace('hsl','hsla'):style.glow; ctx.fill(); ctx.restore();
+        });
+        const now=Date.now(); const isInvincible=this.invincibleUntil>now;
+        const topAuraTier=auras.length?auras.reduce((a,b)=>AURA_STYLE[a.tier].tierLevel>=AURA_STYLE[b.tier].tierLevel?a:b).tier:null;
+        const topAura=topAuraTier?{color:topAuraTier==='rainbow'?`hsl(${(Date.now()/8)%360},90%,60%)`:AURA_STYLE[topAuraTier].color}:null;
+        ctx.rotate(this.angle); ctx.beginPath();
+        const teeth=12;
+        for(let i=0;i<teeth*2;i++){ const alpha=(i*Math.PI)/teeth; const r=i%2===0?this.radius:this.radius-5; ctx.lineTo(Math.cos(alpha)*r,Math.sin(alpha)*r); }
+        ctx.closePath();
+        ctx.fillStyle = this.rank ? RANK_COLORS[this.rank] : '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = isInvincible ? 4 : 2;
+        ctx.strokeStyle = isInvincible ? '#ffffff' : (topAura ? topAura.color : (this.rank ? RANK_COLORS[this.rank] : '#1e293b'));
+        ctx.stroke();
+        ctx.rotate(-this.angle); ctx.save(); ctx.beginPath(); ctx.arc(0,0,this.radius*0.62,0,Math.PI*2); ctx.clip();
+        if(this.img.complete&&this.img.src&&this.img.naturalWidth!==0) ctx.drawImage(this.img,-this.radius*0.62,-this.radius*0.62,this.radius*1.24,this.radius*1.24);
+        else { ctx.fillStyle=this.color; ctx.fill(); ctx.fillStyle='#fff'; ctx.font=`bold ${this.radius*0.65}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(this.userNickname.charAt(0).toUpperCase(),0,1); }
+        ctx.restore(); ctx.restore();
+        ctx.save(); ctx.fillStyle=topAura?topAura.color:(this.rank?RANK_COLORS[this.rank]:'#ffffff');
+        ctx.font='bold 12px "Be Vietnam Pro", Arial'; ctx.textAlign='center'; ctx.shadowColor='black'; ctx.shadowBlur=4;
+        ctx.fillText(`${this.userNickname} (${this.points})`, this.x, this.y-this.radius-8); ctx.restore();
+      }
+    }
+
+    function auraDamageMultiplier(s){ return Math.min(3,1+s.maxAuraTierLevel()*0.5); }
+    function computeDamage(winner,loser){
+      const now=Date.now(); if(loser.spawnGraceUntil>now||loser.invincibleUntil>now) return DAMAGE_IMMUNE;
+      const gap=loser.maxAuraTierLevel()-winner.maxAuraTierLevel(); let dmg=DAMAGE_BASE;
+      if(gap>=2) dmg=DAMAGE_IMMUNE; else if(gap===1) dmg=DAMAGE_REDUCED;
+      if(dmg>0) dmg=Math.round(dmg*auraDamageMultiplier(winner));
+      if(winner.attackBoostUntil>now) dmg*=2; return dmg;
+    }
+    function handleCollisions(){
+      const now = Date.now();
+      for(let i=0;i<spinners.length;i++){
+        for(let j=i+1;j<spinners.length;j++){
+          let s1=spinners[i], s2=spinners[j];
+          let dx=s2.x-s1.x, dy=s2.y-s1.y, dist=Math.sqrt(dx*dx+dy*dy), minDist=s1.radius+s2.radius;
+          if(dist<minDist){
+            let overlap=minDist-dist, nx=dx/dist, ny=dy/dist;
+            s1.x-=nx*(overlap/2); s1.y-=ny*(overlap/2); s2.x+=nx*(overlap/2); s2.y+=ny*(overlap/2);
+            let rvx=s1.vx-s2.vx, rvy=s1.vy-s2.vy, impactSpeed=rvx*nx+rvy*ny;
+            if(impactSpeed>0){
+              const total=s1.points+s2.points, s1Wins=total>0?Math.random()<(s1.points/total):Math.random()<0.5;
+              if(s1Wins){ const d=computeDamage(s1,s2); s1.points+=d; s2.points-=d; }
+              else { const d=computeDamage(s2,s1); s2.points+=d; s1.points-=d; }
+              if(impactSpeed>0.3) playHitSound();
+            }
+            // Reset thời gian idle khi va chạm với spinner khác
+            s1.lastCollisionTime = now;
+            s2.lastCollisionTime = now;
+            // Tốc độ quay sau va chạm (nếu không có aura thì tăng lên 0.42, nếu có aura giữ nguyên)
+            if (!s1.hasAura()) s1.spinSpeed = 0.42;
+            if (!s2.hasAura()) s2.spinSpeed = 0.42;
+            let p=nx*rvx+ny*rvy; s1.vx-=p*nx; s1.vy-=p*ny; s2.vx+=p*nx; s2.vy+=p*ny;
+          }
+        }
+      }
+      spinners=spinners.filter(s=>s.points>0);
+    }
+    function auraBadges(sp){ return sp.liveAuras().map(a=>({gold:'🟡',green:'🟢',red:'🔴',purple:'🟣'}[a.tier]||'')).join(''); }
+    function updateLeaderboardUI(){
+      const sorted=[...spinners].sort((a,b)=>b.points-a.points);
+      leaderboard.innerHTML = sorted.map(s=>{
+        let pfp=s.img.src||FALLBACK_AVATAR;
+        return `<div class="player-item" data-uid="${s.uniqueId}">
+          <img class="p-avatar" src="${pfp}" onerror="this.src='${FALLBACK_AVATAR}'" title="Click để tra hồ sơ" style="cursor:pointer;">
+          <span class="p-name">${s.userNickname}</span>
+          <span class="p-auras">${auraBadges(s)}</span>
+          <span class="p-score" style="background:${s.points>500?'#f59e0b':'#10b981'}">${s.points}đ</span>
+          <span class="profile-icon" data-uid="${s.uniqueId}" style="cursor:pointer; margin-left:6px;">🔍</span>
+        </div>`;
+      }).join('');
+
+      document.querySelectorAll('.player-item').forEach(el => {
+        el.addEventListener('click', function(e){
+          if (e.target.classList.contains('profile-icon') || e.target.classList.contains('p-avatar')) return;
+          const uid = this.dataset.uid;
+          if (uid) {
+            showProfileByUid(uid);
+            navigator.clipboard.writeText(uid).catch(()=>{});
+          }
+        });
+      });
+      document.querySelectorAll('.player-item .p-avatar').forEach(img => {
+        img.addEventListener('click', function(e){
+          e.stopPropagation();
+          const uid = this.parentElement.dataset.uid;
+          if(uid) showProfileByUid(uid);
+        });
+      });
+      document.querySelectorAll('.profile-icon').forEach(icon => {
+        icon.addEventListener('click', function(e){
+          e.stopPropagation();
+          const uid = this.dataset.uid;
+          if(uid) showProfileByUid(uid);
+        });
+      });
+    }
+
+    function makePlayerPicker(rootId){
+      const root=document.getElementById(rootId), toggle=root.querySelector('.player-picker-toggle'), avatarImg=toggle.querySelector('.pp-avatar'), label=toggle.querySelector('.pp-label'), list=root.querySelector('.player-picker-list');
+      let selectedUid='';
+      function close(){list.classList.remove('open');} function open(){list.classList.add('open');}
+      toggle.addEventListener('click',(e)=>{e.stopPropagation(); list.classList.contains('open')?close():open();});
+      document.addEventListener('click',close); list.addEventListener('click',(e)=>e.stopPropagation());
+      function updateLabel(pl){ const sel=pl.find(p=>p.uniqueId===selectedUid); if(sel){ label.textContent=`${sel.userNickname} (${sel.points}đ)`; avatarImg.src=sel.img.src||FALLBACK_AVATAR; avatarImg.style.display='inline-block'; } else { label.textContent='-- Chọn người chơi --'; avatarImg.style.display='none'; } }
+      function render(pl){
+        if(!pl.some(p=>p.uniqueId===selectedUid)) selectedUid='';
+        const sorted = [...pl].sort((a,b) => b.points - a.points);
+        list.innerHTML = sorted.length ? sorted.map(s=>`<div class="pp-item" data-uid="${s.uniqueId}"><img class="pp-item-avatar" src="${s.img.src||FALLBACK_AVATAR}" onerror="this.src='${FALLBACK_AVATAR}'"><span class="pp-item-name">${s.userNickname}</span><span class="pp-item-score">${s.points}đ</span></div>`).join('') : '<div class="pp-empty">Không có người chơi</div>';
+        list.querySelectorAll('.pp-item').forEach(el=>{ el.addEventListener('click',()=>{ selectedUid=el.getAttribute('data-uid'); updateLabel(sorted); close(); }); });
+        updateLabel(sorted);
+      }
+      return { get value(){return selectedUid;}, set value(v){selectedUid=v;}, render, open };
+    }
+
+    window.toggleControlPanel = function(){
+      const p=document.getElementById('control-float-panel'); p.classList.toggle('collapsed');
+      document.getElementById('control-toggle-icon').textContent=p.classList.contains('collapsed')?'▸':'▾';
+    };
+    const controlPlayerPicker = makePlayerPicker('controlPlayerPicker');
+    setInterval(()=>controlPlayerPicker.render(spinners),1000);
+    window.selectPlayerInControlPanel = function(uid){
+      controlPlayerPicker.value=uid; controlPlayerPicker.render(spinners);
+      document.getElementById('control-float-panel').classList.remove('collapsed');
+      document.getElementById('control-toggle-icon').textContent='▾';
+    };
+    window.applyManualPoints = function(direction = 1){
+      const uid=controlPlayerPicker.value; if(!uid){alert('Hãy chọn người chơi trước!');return;}
+      const t=spinners.find(s=>s.uniqueId===uid); if(!t)return;
+      const delta=parseInt(document.getElementById('controlPointsInput').value)||0;
+      t.points = toEven(t.points + delta * direction);
+    };
+    window.killSelectedPlayer = function(){
+      const uid=controlPlayerPicker.value; if(!uid){alert('Hãy chọn người chơi trước!');return;}
+      const t=spinners.find(s=>s.uniqueId===uid); if(!t)return;
+      t.points=0; spinners=spinners.filter(s=>s.points>0); playKillSound();
+    };
+    function killRandomSpinners(count,excludeId){
+      const candidates=spinners.filter(s=>s.uniqueId!==excludeId);
+      const shuffled=candidates.sort(()=>Math.random()-0.5);
+      shuffled.slice(0,count).forEach(v=>{v.points=0;});
+      spinners=spinners.filter(s=>s.points>0);
+    }
+    window.addManualPlayer = function(){
+      const nameInput=document.getElementById('manualId'), statusEl=document.getElementById('manual-status');
+      const username=nameInput.value.trim(); if(!username)return;
+      if(socket.readyState!==WebSocket.OPEN){ statusEl.textContent='⚠️ Chưa kết nối server.'; statusEl.style.color='#ef4444'; return; }
+      statusEl.textContent=`⏳ Đang tra cứu TikTok "${username}"...`; statusEl.style.color='#94a3b8';
+      socket.send(JSON.stringify({type:'manual_add',username})); nameInput.value='';
+      setTimeout(()=>{ if(statusEl.textContent.startsWith('⏳')) statusEl.textContent=''; },6000);
+    };
+
+    // ========== TRA CỨU HỒ SƠ TIKTOK ==========
+    function showProfileByUid(uid) {
+      const sp = spinners.find(s => s.uniqueId === uid);
+      if (!sp) return;
+      document.getElementById('profileInputId').value = uid;
+      document.getElementById('profileInfo').style.display = 'block';
+      document.getElementById('profileAvatar').src = sp.img.src || FALLBACK_AVATAR;
+      document.getElementById('profileName').textContent = sp.userNickname;
+      document.getElementById('profileUid').textContent = `@${uid}`;
+      document.getElementById('profilePoints').textContent = `${sp.points} điểm - Hạng ${sp.rank||'N/A'}`;
+      document.getElementById('profileStatus').textContent = '';
+      document.getElementById('profile-float-panel').classList.remove('collapsed');
+      document.getElementById('profile-toggle-icon').textContent = '▾';
+      window._currentProfileUid = uid;
+    }
+    window.lookupProfileById = function() {
+      const uid = document.getElementById('profileInputId').value.trim();
+      if (!uid) return;
+      const sp = spinners.find(s => s.uniqueId === uid);
+      if (sp) { showProfileByUid(uid); }
+      else {
+        socket.send(JSON.stringify({ type: 'lookup_profile', username: uid }));
+        document.getElementById('profileStatus').textContent = 'Đang tra cứu...';
+      }
+    };
+    window.openTikTokProfile = function() {
+      const uid = window._currentProfileUid || document.getElementById('profileInputId').value.trim();
+      if (uid && !uid.startsWith('default_')) window.open(`https://www.tiktok.com/@${uid}`, '_blank');
+      else alert('Không thể mở TikTok cho người chơi mặc định.');
+    };
+    window.toggleProfilePanel = function() {
+      const p = document.getElementById('profile-float-panel');
+      p.classList.toggle('collapsed');
+      document.getElementById('profile-toggle-icon').textContent = p.classList.contains('collapsed') ? '▸' : '▾';
+    };
+
+    // ========== ẨN/HIỆN TOÀN BỘ PANEL ==========
+    window.toggleAllPanels = function() {
+      const container = document.getElementById('arena-container');
+      container.classList.toggle('panels-hidden');
+      const btn = document.getElementById('toggle-all-panels-btn');
+      if (container.classList.contains('panels-hidden')) {
+        btn.textContent = '👁️ Hiện tất cả panel';
+      } else {
+        btn.textContent = '👁️ Ẩn tất cả panel';
+      }
+    };
+
+    // ========== DRAG CÁC PANEL ==========
+    function enableDrag(panelElement) {
+      const header = panelElement.querySelector('.panel-header');
+      if (!header) return;
+      let offsetX, offsetY, isDragging = false;
+
+      header.addEventListener('mousedown', (e) => {
+        // không kéo khi click vào nút toggle (collapse)
+        if (e.target.closest('button')) return;
+        isDragging = true;
+        const rect = panelElement.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        panelElement.style.transition = 'none';
+        document.body.style.userSelect = 'none';
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const container = document.getElementById('arena-container');
+        const containerRect = container.getBoundingClientRect();
+        let newLeft = e.clientX - containerRect.left - offsetX;
+        let newTop = e.clientY - containerRect.top - offsetY;
+        // giới hạn trong khung arena-container
+        newLeft = Math.max(0, Math.min(newLeft, containerRect.width - panelElement.offsetWidth));
+        newTop = Math.max(0, Math.min(newTop, containerRect.height - panelElement.offsetHeight));
+        panelElement.style.left = newLeft + 'px';
+        panelElement.style.top = newTop + 'px';
+        panelElement.style.right = 'auto';
+        panelElement.style.bottom = 'auto';
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isDragging) {
+          isDragging = false;
+          panelElement.style.transition = '';
+          document.body.style.userSelect = '';
+        }
+      });
+    }
+
+    // Kích hoạt kéo cho tất cả panel nổi
+    enableDrag(document.getElementById('control-float-panel'));
+    enableDrag(document.getElementById('aura-float-panel'));
+    enableDrag(document.getElementById('tts-control-panel'));
+    enableDrag(document.getElementById('profile-float-panel'));
+
+    socket.addEventListener('message', (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'lookup_profile_result') {
+        if (data.uniqueId) {
+          document.getElementById('profileInfo').style.display = 'block';
+          document.getElementById('profileAvatar').src = data.avatar || FALLBACK_AVATAR;
+          document.getElementById('profileName').textContent = data.nickname;
+          document.getElementById('profileUid').textContent = `@${data.uniqueId}`;
+          document.getElementById('profilePoints').textContent = '';
+          document.getElementById('profileStatus').textContent = 'Tra cứu thành công.';
+          window._currentProfileUid = data.uniqueId;
+        } else {
+          document.getElementById('profileStatus').textContent = 'Không tìm thấy người dùng.';
+        }
+      }
+      if (data.type === 'follow') {
+        let sp = spinners.find(s => s.uniqueId === data.uniqueId);
+        if (!sp) { sp = new Spinner(data.uniqueId, data.user, data.avatar); sp.points = 100; spinners.push(sp); playJoinSound(); }
+        else sp.points += 10;
+        announceFollow(data.user);
+      }
+      if (data.type === 'join_arena') {
+        let sp = spinners.find(s => s.uniqueId === data.uniqueId);
+        if (!sp) { sp = new Spinner(data.uniqueId, data.user, data.avatar); sp.points = toEven(data.startPoints || 100); spinners.push(sp); playJoinSound(); }
+        else {
+          if (data.source === 'gift') sp.points += toEven((data.diamonds || 1) * 4);
+          else if (data.source === 'like') sp.points += 10;
+          else if (data.source === 'comment') sp.points += 6;
+        }
+        if (data.auraTier) sp.addAura(data.auraTier, data.auraDurationMs || 10000);
+        if (data.source === 'gift') {
+          announceDonation(data.user, data.giftName);
+          if (data.bonusPoints) sp.points += toEven(data.bonusPoints);
+          if (data.killCount > 0) { killRandomSpinners(data.killCount, sp.uniqueId); playKillSound(); }
+        }
+      }
+      if (data.type === 'apply_aura') {
+        let target = spinners.find(s => s.uniqueId === data.uniqueId);
+        if (target) target.addAura(data.auraTier, data.auraDurationMs || 4000);
+      }
+      if (data.type === 'member_join') announceMemberJoin(data.user);
+      if (data.type === 'liked_stream') announceLike(data.user);
+    });
+
+    const AURA_DEFAULT_DURATION={gold:TIER_AURA_DURATION_MS,green:TIER_AURA_DURATION_MS,red:TIER_AURA_DURATION_MS,purple:TIER_AURA_DURATION_MS,rainbow:RAINBOW_DURATION_MS};
+    window.toggleAuraPanel = function(){
+      const p=document.getElementById('aura-float-panel'); p.classList.toggle('collapsed');
+      document.getElementById('aura-toggle-icon').textContent=p.classList.contains('collapsed')?'▸':'▾';
+    };
+    const auraPlayerPicker = makePlayerPicker('auraPlayerPicker');
+    setInterval(()=>auraPlayerPicker.render(spinners),1000);
+    window.applyManualAura = function(){
+      const auraType=document.getElementById('auraTypeSelect').value, uid=auraPlayerPicker.value;
+      if(!uid){alert('Hãy chọn người chơi trước!');return;}
+      const t=spinners.find(s=>s.uniqueId===uid); if(!t)return;
+      if(auraType==='rainbow') t.triggerRainbow();
+      else t.addAura(auraType, AURA_DEFAULT_DURATION[auraType]||TIER_AURA_DURATION_MS);
+    };
+
+    function updateTimerUI(){
+      const remaining=Math.max(0,roundEndTime-Date.now()), totalSec=Math.ceil(remaining/1000);
+      document.getElementById('round-timer').textContent=`${String(Math.floor(totalSec/60)).padStart(2,'0')}:${String(totalSec%60).padStart(2,'0')}`;
+    }
+    function endRound(){
+      roundActive=false; playRoundEndSound();
+      const sorted=[...spinners].sort((a,b)=>b.points-a.points);
+      showTop3Overlay(sorted.slice(0,3), sorted.slice(3));
+      setTimeout(startNewRound, RESULT_DISPLAY_MS);
+    }
+    function showTop3Overlay(top3,rest){
+      const rankClasses=['rank-1','rank-2','rank-3'], rankEmoji=['🥇','🥈','🥉'];
+      document.getElementById('top3-list').innerHTML=top3.map((s,i)=>`<div class="top3-card ${rankClasses[i]}"><div class="rank">${rankEmoji[i]}</div><img src="${s.img.src||FALLBACK_AVATAR}" onerror="this.src='${FALLBACK_AVATAR}'"><div class="name">${s.userNickname}</div><div class="score">${s.points}đ</div></div>`).join('');
+      const restEl=document.getElementById('rest-list');
+      if(rest.length){ restEl.innerHTML=rest.map((s,i)=>`<div class="rest-item"><span class="rank-num">#${i+4}</span><img src="${s.img.src||FALLBACK_AVATAR}" onerror="this.src='${FALLBACK_AVATAR}'"><span class="name">${s.userNickname}</span><span class="score">${s.points}đ</span></div>`).join(''); restEl.style.display='block'; }
+      else { restEl.innerHTML=''; restEl.style.display='none'; }
+      document.getElementById('top3-overlay').classList.add('show');
+    }
+    function startNewRound(){ spinners=[]; roundEndTime=Date.now()+ROUND_DURATION_MS; roundActive=true; document.getElementById('top3-overlay').classList.remove('show'); }
+    function updateRanks(){ const sorted=[...spinners].sort((a,b)=>b.points-a.points); spinners.forEach(s=>s.rank=null); sorted.slice(0,3).forEach((s,i)=>{s.rank=i+1;}); }
+
+    function gameLoop(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle='#0a0f1a'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.save(); ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(arenaLeft,arenaTop,arenaHalf*2,arenaHalf*2,24);
+      else ctx.rect(arenaLeft,arenaTop,arenaHalf*2,arenaHalf*2);
+      ctx.fillStyle='#101826'; ctx.fill(); ctx.lineWidth=4; ctx.strokeStyle='#ff3d71'; ctx.shadowColor='#ff3d71'; ctx.shadowBlur=15; ctx.stroke(); ctx.shadowBlur=0; ctx.restore();
+      updateRanks();
+      if(roundActive){ spinners.forEach(s=>{s.update(); s.draw();}); handleCollisions(); updateTimerUI(); if(Date.now()>=roundEndTime) endRound(); }
+      else spinners.forEach(s=>s.draw());
+      updateLeaderboardUI(); requestAnimationFrame(gameLoop);
+    }
+    gameLoop();
+  })();
+</script>
+</body>
+</html>

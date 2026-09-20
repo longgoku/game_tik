@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Răng Cưa Tử Chiến</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #00ff00; }
+        canvas { display: block; background-color: #111; }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+
+let players = [];
+
+const AURA_COLORS = { green: '#22c55e', red: '#ef4444', purple: '#a855f7' };
+
+class GearPlayer {
+    constructor(uniqueId, username, avatarUrl) {
+        this.uniqueId = uniqueId;
+        this.username = username;
+        this.baseRadius = 20;
+        this.radius = this.baseRadius;
+        this.growth = 0;
+        this.auraTier = null;   // 'green' | 'red' | 'purple' | 'rainbow'
+        this.auraUntil = 0;
+        this.rainbowHue = 0;
+        this.x = Math.random() * (canvas.width - 100) + 50;
+        this.y = Math.random() * (canvas.height - 100) + 50;
+        this.vx = (Math.random() - 0.5) * 6;
+        this.vy = (Math.random() - 0.5) * 6;
+        this.angle = 0;
+        this.color = `hsl(${Math.random() * 360}, 80%, 60%)`;
+        this.avatar = new Image();
+        this.avatar.src = avatarUrl || 'https://www.tiktok.com/favicon.ico';
+    }
+    addAura(tier, durationMs) {
+        this.auraTier = tier;
+        this.auraUntil = Date.now() + (durationMs || 10000);
+    }
+    update() {
+        if (this.auraTier && Date.now() > this.auraUntil) this.auraTier = null;
+        this.angle += 0.05 + (this.auraTier ? 0.02 : 0);
+        this.radius = this.baseRadius + this.growth;
+        this.x += this.vx; this.y += this.vy;
+        if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) this.vx *= -1;
+        if (this.y - this.radius < 0 || this.y + this.radius > canvas.height) this.vy *= -1;
+    }
+    draw() {
+        ctx.save(); ctx.translate(this.x, this.y);
+        if (this.auraTier) {
+            let glow = AURA_COLORS[this.auraTier];
+            if (this.auraTier === 'rainbow') {
+                this.rainbowHue = (this.rainbowHue + 4) % 360;
+                glow = `hsl(${this.rainbowHue}, 90%, 60%)`;
+            }
+            ctx.shadowBlur = 20; ctx.shadowColor = glow;
+            ctx.beginPath(); ctx.arc(0, 0, this.radius + 12, 0, Math.PI * 2);
+            ctx.globalAlpha = 0.35; ctx.fillStyle = glow; ctx.fill(); ctx.globalAlpha = 1;
+        }
+        ctx.rotate(this.angle); ctx.beginPath();
+        const teeth = 12; const innerRadius = this.radius * 0.8; const outerRadius = this.radius;
+        for (let i = 0; i < teeth * 2; i++) {
+            const angle = (Math.PI * 2 / (teeth * 2)) * i;
+            const r = i % 2 === 0 ? outerRadius : innerRadius;
+            ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+        }
+        ctx.closePath(); ctx.fillStyle = this.color; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.rotate(-this.angle); ctx.beginPath(); ctx.arc(0, 0, innerRadius * 0.6, 0, Math.PI * 2); ctx.clip();
+        try { ctx.drawImage(this.avatar, -innerRadius * 0.6, -innerRadius * 0.6, innerRadius * 1.2, innerRadius * 1.2); } catch(e) {}
+        ctx.restore();
+        ctx.fillStyle = '#fff'; ctx.font = '14px Arial'; ctx.textAlign = 'center';
+        ctx.fillText(this.username, this.x, this.y - this.radius - 5);
+    }
+}
+
+function handleCollisions() {
+    for (let i = 0; i < players.length; i++) {
+        for (let j = i + 1; j < players.length; j++) {
+            let p1 = players[i]; let p2 = players[j];
+            let dx = p2.x - p1.x; let dy = p2.y - p1.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < p1.radius + p2.radius) {
+                let angle = Math.atan2(dy, dx);
+                let speed1 = Math.sqrt(p1.vx * p1.vx + p1.vy * p1.vy);
+                let speed2 = Math.sqrt(p2.vx * p2.vx + p2.vy * p2.vy);
+                p1.vx = -Math.cos(angle) * speed1;
+                p1.vy = -Math.sin(angle) * speed1;
+                p2.vx = Math.cos(angle) * speed2;
+                p2.vy = Math.sin(angle) * speed2;
+                p1.growth += 2; p2.growth += 2; // CHẠM VÀO NHAU THÌ TO LÊN
+                p1.x -= Math.cos(angle) * 2; p1.y -= Math.sin(angle) * 2;
+            }
+        }
+    }
+}
+
+function killRandom(count, exceptUniqueId) {
+    const pool = players.filter(p => p.uniqueId !== exceptUniqueId);
+    for (let i = 0; i < count && pool.length; i++) {
+        const victim = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+        players = players.filter(p => p !== victim);
+    }
+}
+
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    handleCollisions();
+    players.forEach(player => { player.update(); player.draw(); });
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+
+const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+const ws = new WebSocket(`${wsProtocol}//${location.host}`);
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    if (data.type === 'join_arena') {
+        let p = players.find(pl => pl.uniqueId === data.uniqueId);
+        if (!p) {
+            p = new GearPlayer(data.uniqueId, data.user, data.avatar);
+            players.push(p);
+        } else {
+            p.growth += 6; // vào sân thêm lần nữa (like/comment/gift lặp lại) -> to thêm
+        }
+        if (data.auraTier) p.addAura(data.auraTier, data.auraDurationMs || 10000);
+        if (data.killCount > 0) killRandom(data.killCount, p.uniqueId);
+    }
+
+    if (data.type === 'apply_aura') {
+        const p = players.find(pl => pl.uniqueId === data.uniqueId);
+        if (p) p.addAura(data.auraTier, data.auraDurationMs || 4000);
+    }
+};
+</script>
+</body>
+</html>
